@@ -7,6 +7,8 @@ import instaloader
 import getpass
 import time
 
+from instaloader.exceptions import QueryReturnedNotFoundException
+
 
 def who(username, password):
     L = instaloader.Instaloader()
@@ -45,22 +47,34 @@ def who(username, password):
         followingCount = len(f.readlines())
 
     # print('Estimated time: ')
+    ## Aux code
+    # Read the wholist.txt and pass it to a list
+    with open('wholist.txt', 'r') as f:
+        wholist = f.readlines()
     
+
     # Iterate each username in following list
     whois = []
     print('[ OK ] Starting process ...')
     counter = 0
     start = time.time()
     for user in following_list:
-        counter += 1
-        profile = instaloader.Profile.from_username(L.context, user)
-        following = profile.get_followees()
-        following_list = [f.username for f in following]
-        if target not in following_list:
-            print(f'[ ! ] {counter} / {followingCount} Found user {user}')
-            whois.append(user)
-        else:
-            print(f'[ - ] {counter} / {followingCount} ...')
+        try:
+            counter += 1
+            if user not in wholist:
+                profile = instaloader.Profile.from_username(L.context, user)
+                following = profile.get_followees()
+                following_list = [f.username for f in following]
+                if target not in following_list:
+                    print(f'[ ! ] {counter} / {followingCount} Found user {user}')
+                    whois.append(user)
+                else:
+                    print(f'[ - ] {counter} / {followingCount} ...')
+            else:
+                print(f'[ ! ] {counter} / {followingCount} Retrieved user {user}')
+        except QueryReturnedNotFoundException:
+            print(f'[ ! ] {counter} / {followingCount} Not Found user {user}')
+            continue
 
     end = time.time()
     elapsed = round(end - start, 4)
