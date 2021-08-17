@@ -49,14 +49,19 @@ def who(username, password):
     # Iterate each username in following list
     whois = []
     print('[ OK ] Starting process ...')
+    counter = 0
     start = time.time()
     for user in following_list:
+        counter += 1
         profile = instaloader.Profile.from_username(L.context, user)
         following = profile.get_followees()
         following_list = [f.username for f in following]
         if target not in following_list:
-            print(f'[ ! ] Found user {user}')
+            print(f'[ ! ] {count} / {followingCount} Found user {user}')
             whois.append(user)
+        else:
+            print(f'[ - ] {count} / {followingCount} ...')
+
     end = time.time()
     elapsed = round(end - start, 4)
     print(f'\n\n[ ++ ] Elapsed Time: {elapsed}s')
