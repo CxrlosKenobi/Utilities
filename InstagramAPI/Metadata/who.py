@@ -43,15 +43,26 @@ def who(username, password):
     print(f'[ ++ ] Elapsed Time: {elapsed}s')
     print(f'[ OK ] Followers list saved to {target}_followers.txt')
     
+    followingCount = []
     with open(f'{target}_following.txt', 'r') as f:
-        followingCount = len(f.readlines())
-
+        for line in f:
+            followingCount.append(line.strip())
+    
     # print('Estimated time: ')
     ## Aux code
     # Read the wholist.txt and pass it to a list
+    wholist = []
     with open('wholist.txt', 'r') as f:
-        wholist = f.readlines()
-    
+        for line in f:
+            wholist.append(line.strip())
+    # Remove from following list the users that are in the wholist
+    aux = 0
+    for user in following_list:
+        if user in wholist:
+            aux += 1
+            following_list.remove(user)
+    print(f'[ ! ] Following list updated: {aux} users removed')
+
 
     # Iterate each username in following list
     whois = []
@@ -68,10 +79,15 @@ def who(username, password):
                 if target not in following_list:
                     print(f'[ ! ] {counter} / {followingCount} Found user {user}')
                     whois.append(user)
+                    with open('wholist.txt', 'a') as f:
+                        f.write(user + '\n')
                 else:
                     print(f'[ - ] {counter} / {followingCount} ...')
             else:
                 print(f'[ ! ] {counter} / {followingCount} Retrieved user {user}')
+                with open('wholist.txt', 'a') as f:
+                    f.write(user + '\n')
+
         except QueryReturnedNotFoundException:
             print(f'[ ! ] {counter} / {followingCount} Not Found user {user}')
             continue
