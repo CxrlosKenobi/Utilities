@@ -19,49 +19,67 @@ def who(username, password):
     print('[ OK ] Starting process ...')
 
     # Retrieve in a list the following of the user
-    start = time.time()
-    following = profile.get_followees()
-    following_list = [f.username for f in following]
-    with open(f'{target}_following.txt', 'w') as f:
-        for user in following_list:
-            f.write(user + '\n')
-    end = time.time()
-    elapsed = round(end - start, 4)
-    print(f'[ ++ ] Elapsed Time: {elapsed}s')
-    print(f'[ OK ] Following list saved to {target}_following.txt')
-    
-    # Retrieve in a list the followers of the user
-    start = time.time()
-    followers = profile.get_followers()
-    followers_list = [f.username for f in followers]
-    with open(f'{target}_followers.txt', 'w') as f:
-        for user in followers_list:
-            f.write(user + '\n')
-    end = time.time()
+    try:
+        following_list = []
+        with open(f'{target}_following.txt') as f:
+            for line in f:
+                following_list.append(line.strip())
+        print(f'[ OK ] Following list loaded from file')
+    except FileNotFoundError:
+        print(f'[ OK ] Following list not found. Creating new file')
+        start = time.time()
+        following = profile.get_followees()
+        following_list = [f.username for f in following]
+        with open(f'{target}_following.txt', 'w') as f:
+            for user in following_list:
+                f.write(user + '\n')
+        end = time.time()
+        elapsed = round(end - start, 4)
+        print(f'[ ++ ] Elapsed Time: {elapsed}s')
+        print(f'[ OK ] Following list saved to {target}_following.txt')    
+    followingCount = len(following_list)
 
-    elapsed = round(end - start, 4)
-    print(f'[ ++ ] Elapsed Time: {elapsed}s')
-    print(f'[ OK ] Followers list saved to {target}_followers.txt')
-    
-    followingCount = []
-    with open(f'{target}_following.txt', 'r') as f:
-        for line in f:
-            followingCount.append(line.strip())
-    
+    # Retrieve in a list the followers of the user
+    try:
+        followers_list = []
+        with open(f'{target}_followers.txt') as f:
+            for line in f:
+                followers_list.append(line.strip())
+        print(f'[ OK ] Followers list loaded from file')
+    except FileNotFoundError:
+        print(f'[ OK ] Followers list not found. Creating new file')
+        start = time.time()
+        followers = profile.get_followers()
+        followers_list = [f.username for f in followers]
+        with open(f'{target}_followers.txt', 'w') as f:
+            for user in followers_list:
+                f.write(user + '\n')
+        end = time.time()
+        elapsed = round(end - start, 4)
+        print(f'[ ++ ] Elapsed Time: {elapsed}s')
+        print(f'[ OK ] Followers list saved to {target}_followers.txt')
+
     # print('Estimated time: ')
+
+
     ## Aux code
-    # Read the wholist.txt and pass it to a list
     wholist = []
-    with open('wholist.txt', 'r') as f:
+    with open('wholist.txt', 'r') as f: # Already scanned that does not follow me backup
         for line in f:
             wholist.append(line.strip())
-    # Remove from following list the users that are in the wholist
-    aux = 0
-    for user in following_list:
-        if user in wholist:
-            aux += 1
-            following_list.remove(user)
-    print(f'[ ! ] Following list updated: {aux} users removed')
+    # Add the users from who.txt to the wholist without duplicates
+    with open('who.txt', 'r') as f: # Already scanned that does not follow me 
+        for line in f:
+            if line.strip() not in wholist:
+                wholist.append(line.strip())
+    with open('whoyes.txt', 'r') as f: # Already scanned that indeed follow me 
+        for line in f:
+            wholist.append(line.strip())
+
+    # Remove from following list the users that are in the wholist and who.txt
+    following_list = [user for user in following_list if user not in wholist]
+
+    print(f'[ ! ] Following list updated: {len(wholist)} users removed')
 
 
     # Iterate each username in following list
@@ -77,30 +95,27 @@ def who(username, password):
                 following = profile.get_followees()
                 following_list = [f.username for f in following]
                 if target not in following_list:
-                    print(f'[ ! ] {counter} / {followingCount} Found user {user}')
+                    print(f'[ ! ] {counter + len(wholist)} / {followingCount} Found user {user}')
                     whois.append(user)
-                    with open('wholist.txt', 'a') as f:
+                    with open('who.txt', 'a') as f:
                         f.write(user + '\n')
                 else:
-                    print(f'[ - ] {counter} / {followingCount} ...')
+                    print(f'[ - ] {counter + len(wholist)} / {followingCount} ...')
+                    with open('whoyes.txt', 'a') as f:
+                        f.write(user + '\n')
             else:
-                print(f'[ ! ] {counter} / {followingCount} Retrieved user {user}')
-                with open('wholist.txt', 'a') as f:
+                print(f'[ ! ] {counter + len(wholist)} / {followingCount} Retrieved user {user}')
+                with open('who.txt', 'a') as f:
                     f.write(user + '\n')
 
         except QueryReturnedNotFoundException:
-            print(f'[ ! ] {counter} / {followingCount} Not Found user {user}')
+            print(f'[ ! ] {counter + len(wholist)} / {followingCount} Not Found user {user}')
             continue
 
     end = time.time()
     elapsed = round(end - start, 4)
     print(f'\n\n[ ++ ] Elapsed Time: {elapsed}s')
     print(f'[ OK ] {len(whois)} users found!')
-
-    print(f'[ ! ] Writing to file ...')
-    with open(f'{target}_whois.txt', 'w') as f:
-        for user in whois:
-            f.write(user + '\n')
     print(f'[ OK ] Writing to file completed!')
     
 
@@ -108,7 +123,11 @@ def main():
     # Get credentials
     username = input("Username: ")
     password = getpass.getpass("Password: ")
-    who(username, password)
-
+    try:
+        who(username, password)
+    except KeyboardInterrupt:
+        print('\n[ ! ] Script interrupted by user')
+        exit()
+    
 if __name__ == '__main__':
     main()
