@@ -1,2 +1,5 @@
 # Cache files
 .swift-sfdc.json
+
+# Git directories
+.gitignore
