@@ -3,12 +3,11 @@
 # # # # # # # # # # # # # # # # 
 
 # Script that return the users that do not follow your instagram account, but you do follow.
-import instaloader
-import getpass
-import time
-
 from instaloader.exceptions import QueryReturnedNotFoundException
-
+from colorama import Fore, Back, Style
+import OAuthLogInto as Auth
+import instaloader
+import time
 
 def who(username, password):
     L = instaloader.Instaloader()
@@ -16,7 +15,7 @@ def who(username, password):
     target = username
 
     profile = instaloader.Profile.from_username(L.context, target)
-    print('[ OK ] Starting process ...')
+    print(Fore.GREEN + '[ OK ]' + Style.RESET_ALL + ' Starting process ...')
 
     # Retrieve in a list the following of the user
     try:
@@ -24,9 +23,9 @@ def who(username, password):
         with open(f'{target}_following.txt') as f:
             for line in f:
                 following_list.append(line.strip())
-        print(f'[ OK ] Following list loaded from file')
+        print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + 'Following list loaded from file')
     except FileNotFoundError:
-        print(f'[ OK ] Following list not found. Creating new file')
+        print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + 'Following list not found. Creating new file')
         start = time.time()
         following = profile.get_followees()
         following_list = [f.username for f in following]
@@ -35,8 +34,8 @@ def who(username, password):
                 f.write(user + '\n')
         end = time.time()
         elapsed = round(end - start, 4)
-        print(f'[ ++ ] Elapsed Time: {elapsed}s')
-        print(f'[ OK ] Following list saved to {target}_following.txt')    
+        print(Fore.GREEN + '[ ++ ] ' + Style.RESET_ALL + f'Elapsed Time: {elapsed}s')
+        print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + f'Following list saved to {target}_following.txt')    
     followingCount = len(following_list)
 
     # Retrieve in a list the followers of the user
@@ -45,9 +44,9 @@ def who(username, password):
         with open(f'{target}_followers.txt') as f:
             for line in f:
                 followers_list.append(line.strip())
-        print(f'[ OK ] Followers list loaded from file')
+        print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + 'Followers list loaded from file')
     except FileNotFoundError:
-        print(f'[ OK ] Followers list not found. Creating new file')
+        print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + 'Followers list not found. Creating new file')
         start = time.time()
         followers = profile.get_followers()
         followers_list = [f.username for f in followers]
@@ -56,77 +55,70 @@ def who(username, password):
                 f.write(user + '\n')
         end = time.time()
         elapsed = round(end - start, 4)
-        print(f'[ ++ ] Elapsed Time: {elapsed}s')
-        print(f'[ OK ] Followers list saved to {target}_followers.txt')
-
-    # print('Estimated time: ')
-
+        print(Fore.GREEN + '[ ++ ] ' + Style.RESET_ALL + f'Elapsed Time: {elapsed}s')
+        print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + f'Followers list saved to {target}_followers.txt')
 
     ## Aux code
-    wholist = []
-    with open('wholist.txt', 'r') as f: # Already scanned that does not follow me backup
-        for line in f:
-            wholist.append(line.strip())
-    # Add the users from who.txt to the wholist without duplicates
-    with open('who.txt', 'r') as f: # Already scanned that does not follow me 
-        for line in f:
-            if line.strip() not in wholist:
-                wholist.append(line.strip())
-    with open('whoyes.txt', 'r') as f: # Already scanned that indeed follow me 
-        for line in f:
-            wholist.append(line.strip())
+    retrieved = []
+    # Add the users from who.txt to the retrieved without duplicates
+    try:
+        with open('who.txt', 'r') as f: # Already scanned that does not follow me 
+            for line in f:
+                if line.strip() not in retrieved:
+                    retrieved.append(line.strip())
+        with open('whoyes.txt', 'r') as f: # Already scanned that indeed follow me 
+            for line in f:
+                retrieved.append(line.strip())
+    except FileNotFoundError:
+        pass
 
-    # Remove from following list the users that are in the wholist and who.txt
-    following_list = [user for user in following_list if user not in wholist]
-
-    print(f'[ ! ] Following list updated: {len(wholist)} users removed')
-
+    # Remove from following list the users that are in the retrieved and who.txt
+    following_list = [user for user in following_list if user not in retrieved]
+    print(Fore.YELLOW + '[ ! ] ' + Style.RESET_ALL + f'Updating following list in case of retrieved users: {len(retrieved)} users retrieved')
 
     # Iterate each username in following list
     whois = []
-    print('[ OK ] Starting process ...')
+    print(Fore.GREEN + '[ OK ] ' + Style.RESET_ALL + 'Starting process ...')
     counter = 0
     start = time.time()
     for user in following_list:
         try:
             counter += 1
-            if user not in wholist:
+            if user not in retrieved:
                 profile = instaloader.Profile.from_username(L.context, user)
                 following = profile.get_followees()
                 following_list = [f.username for f in following]
                 if target not in following_list:
-                    print(f'[ ! ] {counter + len(wholist)} / {followingCount} Found user {user}')
+                    print(Fore.CYAN + '[ ! ] ' + Style.RESET_ALL + f'{counter + len(retrieved)} / {followingCount} Found user' + Fore.CYAN + f' {user}' + Style.RESET_ALL)
                     whois.append(user)
                     with open('who.txt', 'a') as f:
                         f.write(user + '\n')
                 else:
-                    print(f'[ - ] {counter + len(wholist)} / {followingCount} ...')
+                    print(f'[ - ] {counter + len(retrieved)} / {followingCount} ...')
                     with open('whoyes.txt', 'a') as f:
                         f.write(user + '\n')
             else:
-                print(f'[ ! ] {counter + len(wholist)} / {followingCount} Retrieved user {user}')
+                print(Fore.CYAN + '[ ! ] ' + Style.RESET_ALL + f'{counter + len(retrieved)} / {followingCount} Retrieved user {user}')
                 with open('who.txt', 'a') as f:
                     f.write(user + '\n')
 
         except QueryReturnedNotFoundException:
-            print(f'[ ! ] {counter + len(wholist)} / {followingCount} Not Found user {user}')
+            print(Fore.RED + '[ ! ] ' + Style.RESET_ALL + f'{counter + len(retrieved)} / {followingCount} Not Found user {user}')
             continue
 
     end = time.time()
     elapsed = round(end - start, 4)
-    print(f'\n\n[ ++ ] Elapsed Time: {elapsed}s')
-    print(f'[ OK ] {len(whois)} users found!')
-    print(f'[ OK ] Writing to file completed!')
-    
+    print(Fore.GREEN + '\n\n[ ++ ] ' + Style.RESET_ALL + f'Elapsed Time: {elapsed}s')
+    print(Fore.GREEN + '[ OK ]' + Style.RESET_ALL + f'{len(whois)} users found!')
+    print(Fore.GREEN + '[ OK ]' + Style.RESET_ALL + 'Writing to file completed!')
 
 def main():
-    # Get credentials
-    username = input("Username: ")
-    password = getpass.getpass("Password: ")
     try:
+        username, password = Auth.login()
         who(username, password)
+        print(Fore.YELLOW + '[ - ] ' + Style.RESET_ALL + 'Logging in ...')
     except KeyboardInterrupt:
-        print('\n[ ! ] Script interrupted by user')
+        print(Fore.YELLOW + '\n\n[ ! ]' + Style.RESET_ALL + ' Script interrupted by user')
         exit()
     
 if __name__ == '__main__':
