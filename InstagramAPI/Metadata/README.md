@@ -12,5 +12,5 @@ Be sure to run `pip install -r requirements.txt` on your command line to install
 #### `who.txt`: List of users that do not follow you back.
 #### `whoyes.txt`: List of users that follow you back.
 
-#### `username_followers.txt`: List of users that follow you.
-#### `username_following.txt`: List of users that you follow.
+##### `username_followers.txt`: List of users that follow you.
+##### `username_following.txt`: List of users that you follow.
