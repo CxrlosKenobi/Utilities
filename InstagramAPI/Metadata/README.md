@@ -1,6 +1,7 @@
 # WHO.py
+> The code in this repository is a Python implementation of the Instaloader library.
 
-The code in this repository is a Python implementation of the Instaloader library.
+Automated script that let you know who of your following users in Instagram do not follow you back.
 
 ## Requirements
 Be sure to run `pip install -r requirements.txt` on your command line to install the required dependencies.
